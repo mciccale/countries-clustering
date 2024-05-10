@@ -1,0 +1,271 @@
+\documentclass{article}
+
+\usepackage{array}
+\usepackage{graphicx}
+\usepackage{hyperref}
+\usepackage{xcolor}
+\usepackage[spanish]{babel}
+\usepackage[a4paper, total={7in, 10in}]{geometry}
+
+\title{Clasificación No Supervisada}
+\author{Marco Ciccalè Baztán}
+\date{10/05/2024}
+
+\begin{document}
+
+% Custom titlepage instead of the default \maketitle for report class.
+\begin{titlepage}
+    \centering
+
+    \vspace*{1cm}
+
+    % Title and subtitle are enclosed between two rules.
+    \rule{\textwidth}{1pt}
+
+    % Title
+    \vspace{.7\baselineskip}
+    {\huge \textbf{Clasificación No Supervisada}}
+
+    % Subtitle
+    \vspace*{.5cm}
+    {\LARGE Trabajo 2 de Minería de Datos}
+    
+    \rule{\textwidth}{1pt}
+
+    \vspace{1cm}
+
+    % Set this size for the remaining titlepage.
+    \large
+
+    \centering
+        Marco Ciccalè Baztán \\
+        \textsc{C200028} \\
+        {\normalsize \url{m.ciccale@alumnos.upm.es}}
+
+
+    \vspace{3cm}
+
+    \vfill
+
+    % University and date information at the bottom of the titlepage.
+    Universidad Politécnica de Madrid \\
+    Año Académico 2023-2024 \\
+    10 de Mayo de 2024
+\end{titlepage}
+
+\newpage
+
+\tableofcontents
+
+\newpage
+
+\section{Introducción}
+
+% \noindent En este documento se detallará con exhaustividad todo el proceso que se ha seguido para abordar un problema de clasificación supervisada. \\
+
+% \noindent Para resolver este problema, se ha decidido experimentar con múltiples algoritmos de aprendizaje supervisado de diferentes tipos: probabilísticos, reglas, árboles de decisión, logísticos y KNN. Además, también se exploran métodos de filtrado y envolventes para selección de variables. Así como técnicas que utilizan metaclasificadores como AdaBoost, Bagging, RandomForest y Stacking. \\
+
+% \noindent El objetivo de este experimento es evaluar e interpretar cómo se comportan los diferentes algoritmos ante este problema.
+
+\section{Descripción del problema}
+
+% \noindent El problema que se aborda en este experimento fue propuesto por \textbf{Skybox} como parte del \textit{CS:GO AI Challenge} que tuvo lugar en la primavera del año 2020. Este problema de clasificación se deriva de un videojuego competitivo en el cual dos equipos de 5 miembros compiten por ganar una partida en un mapa específico. El equipo ganador es el equipo que consigue ganar un total de 16 rondas durante el partido. Concretamente, el problema de clasificación trata de predecir que equipo ganará una determinada ronda dado un \textit{snapshot} de la ronda. En este \textit{snapshot} se captura determinada información en un instante de tiempo de una ronda. Dada esta información, sería deseable poder predecir el ganador de la ronda antes de que termine.
+
+\section{Metodología}
+
+\subsection{Dataset}
+
+% \noindent El dataset fue extraído de la plataforma \textit{Kaggle}. Consiste en un archivo \textit{csv} con 97 variables y 122,441 instancias. Cada instancia del dataset corresponde con un \textit{snapshot} de una determinada ronda. A continuación se muestra una descripción de cada una de las variables en el dataset.
+
+% \begin{center}
+% \begin{tabular}{ |m{7em}|m{22em}|m{7em}| }
+% \hline
+% \textbf{Variable} & \textbf{Definición} & \textbf{Valores Posibles} \\
+% \hline
+% time\_left & El tiempo restante de una ronda & Continua \\
+% \hline
+% ct\_score & El puntaje del equipo CT & Continua \\
+% \hline
+% t\_score & El puntaje del equipo T & Continua \\
+% \hline
+% map & El mapa donde se está jugando la ronda & de\_dust2, de\_inferno... \\
+% \hline
+% bomb\_planted & Si la bomba ha sido plantada o no & No (False), Yes (True) \\
+% \hline
+% ct\_health & Los puntos de vida totales de todos los miembros del equipo CT & Continua \\
+% \hline
+% t\_health & Los puntos de vida totales de todos los miembros del equipo T & Continua \\
+% \hline
+% ct\_armor & Los puntos de armadura totales de todos los miembros del equipo CT & Continua \\
+% \hline
+% t\_armor & Los puntos de armadura totales de todos los miembros del equipo CT & Continua \\
+% \hline
+% ct\_money & El dinero total de todos los miembros del equipo CT & Continua \\
+% \hline
+% t\_money & El dinero total de todos los miembros del equipo CT & Continua \\
+% \hline
+% ct\_helmets & La cantidad de cascos total de todos los miembros del equipo CT & [0..5] \\
+% \hline
+% t\_helmets & La cantidad de cascos total de todos los miembros del equipo T & [0..5] \\
+% \hline
+% ct\_defuse\_kits & La cantidad de kits de desactivación total de todos los miembros del equipo CT & [0..5] \\
+% \hline
+% ct\_players\_alive & La cantidad de miembros con vida del equipo CT & [0..5] \\
+% \hline
+% t\_players\_alive & La cantidad de miembros con vida del equipo CT & [0..5] \\
+% \hline
+% ct\_weapon\_X & La cantidad de unidades del arma X del equipo CT & [0..5] \\
+% \hline
+% t\_weapon\_X & La cantidad de unidades del arma X del equipo T & [0..5] \\
+% \hline
+% ct\_grenade\_X & La cantidad de unidades de la granada X del equipo CT & [0..5] \\
+% \hline
+% t\_grenade\_X & La cantidad de unidades de la granada X del equipo T & [0..5] \\
+% \hline
+% round\_winner & El ganador de la ronda & CT, T \\
+% \hline
+% \end{tabular}
+% \end{center}
+
+
+\subsection{Preprocesado de los datos}
+
+% \noindent Dado el volumen masivo de datos en este conjunto de datos, se extrajo un subdataset de 3000 instancias utilizando la estrategia de \textit{stratify}, conservando la homogeneidad del dataset original utilizando \textit{Python}.
+
+% \noindent Una vez reducido el tamaño del dataset, se descretizaron las variables continuas usando el siguiente módulo de \textbf{\textit{Weka}}. \\
+
+% \noindent \verb|Discretize -B 10 -M -1.0 -R first-last -precision 6| \\
+
+% \noindent Y para reemplazar los datos vacíos, se utilizó este módulo de \textbf{\textit{Weka}}. \\
+
+% \noindent \verb|ReplaceMissingValues| \\
+
+\subsection{Algoritmos de aprendizaje}
+
+% \noindent Los algoritmos de aprendizaje que se emplearon en el experimento provienen de la herramienta \textbf{\textit{Weka}}. Estos son los modelos empleados: \textit{IB1}, \textit{IBk}, \textit{Naive Bayes}, \textit{TAN}, \textit{JRip}, \textit{ID3}, \textit{J48} y \textit{Logistic}. \\
+
+% \noindent IB1 e IBk pertenecen a la familia de los algoritmos KNN (K-Nearest Neighbours). Estos algoritmos estiman la pertenencia de un dato a una determinada clase dependiendo de qué clase está más representada en un conjunto de tamaño \verb|K| de los vecinos más cercanos a este dato. La distancia entre dos puntos en este espacio se denomina \textit{distancia euclídea}. \\
+
+% \noindent Naive Bayes y TAN (Tree Augmented Naive Bayes) pertenecen a la familia de algoritmos probabilísticos. Estos algoritmos se basan en el teorema de Bayes para estimar la pertenencia de un dato a una determinada clase. Naive Bayes es la implementación más simple de esta familia, ya que asume que las variables son independientes. Por otro lado, el TAN, no asume que las variables son independientes y por tanto genera un árbol más complejo sobre la relación de las variables. \\
+
+% \noindent JRip pertenece a la familia de los algoritmos de inducción de reglas. Estos algoritmos generan reglas iterativamente basándose en la información proporcionada por el conjunto de datos. Estas reglas se emplean para clasificar nuevos datos. \\
+
+% \noindent ID3 y J48 pertenecen a la familia de algoritmos basados en árboles de decisión. Estos algoritmos se basan construir un árbol de decisión que representa las relaciones entre las variables y las clases objetivo. ID3 emplea el \textit{information gain} para construir el árbol. Por otro lado, el J48 es una mejora natural del ID3 que utiliza el \textit{information gain ratio} para construir el árbol. Este árbol se empleará para clasificar nuevos datos. \\
+
+% \noindent Logistic pertenece a la familia de algoritmos de regresión. Estos algoritmos tratan de estimar los parámetros necesarios mediante maximizar la función de verosimilitud. \\
+
+\subsection{Pruebas realizadas}
+
+\section{Resultados}
+
+\noindent En esta sección se presentan los resultados de la evaluación de todos los modelos.
+
+\subsection{Clustering Particional}
+
+% \begin{center}
+% \begin{tabular}{ |m{11em}|m{7em}|m{7em}|m{7em}| }
+% \hline
+% \textbf{Algoritmo} & \textbf{\textit{Accuracy}} & \textbf{\textit{Precision}} & \textbf{\textit{Recall}}\\
+% \hline
+% IB1 & 0.734 & 0.734 & 0.734\\
+% \hline
+% IB30 & 0.747 & 0.749 & 0.748\\
+% \hline
+% IB50 & 0.740 & 0.741 & 0.740\\
+% \hline
+% ID3 & 0.622 & 0.706 & 0.706\\
+% \hline
+% J48 & 0.719 & 0.720 & 0.720\\
+% \hline
+% JRip & 0.717 & 0.720 & 0.718\\
+% \hline
+% Logistic & 0.741 & 0.741 & 0.741\\
+% \hline
+% Naive Bayes & 0.716 & 0.717 & 0.716\\
+% \hline
+% TAN & 0.739 & 0.740 & 0.740\\
+% \hline
+% \end{tabular}
+% \end{center}
+
+\subsection{Clustering Jerárquico}
+
+% \begin{center}
+% \begin{tabular}{ |m{11em}|m{7em}|m{7em}|m{7em}| }
+% \hline
+% \textbf{Algoritmo} & \textbf{\textit{Accuracy}} & \textbf{\textit{Precision}} & \textbf{\textit{Recall}}\\
+% \hline
+% IB1 & 0.688 & 0.689 & 0.688\\
+% \hline
+% IB30 & 0.727 & 0.732 & 0.727\\
+% \hline
+% IB50 & 0.724 & 0.728 & 0.724\\
+% \hline
+% ID3 & 0.621 & 0.696 & 0.695\\
+% \hline
+% J48 & 0.731 & 0.731 & 0.731\\
+% \hline
+% JRip & 0.724 & 0.734 & 0.724\\
+% \hline
+% Logistic & 0.741 & 0.742 & 0.741\\
+% \hline
+% Naive Bayes & 0.698 & 0.700 & 0.698\\
+% \hline
+% TAN & 0.730 & 0.730 & 0.730\\
+% \hline
+% \end{tabular}
+% \end{center}
+
+\subsection{Clustering Probabilístico}
+
+% \begin{center}
+% \begin{tabular}{ |m{11em}|m{7em}|m{7em}|m{7em}| }
+% \hline
+% \textbf{Algoritmo} & \textbf{\textit{Accuracy}} & \textbf{\textit{Precision}} & \textbf{\textit{Recall}}\\
+% \hline
+% IB1 & 0.714 & 0.715 & 0.714\\
+% \hline
+% IB30 & 0.748 & 0.751 & 0.748\\
+% \hline
+% IB50 & 0.746 & 0.748 & 0.746\\
+% \hline
+% ID3 & 0.627 & 0.706 & 0.705\\
+% \hline
+% J48 & 0.731 & 0.731 & 0.731\\
+% \hline
+% JRip & 0.729 & 0.735 & 0.729\\
+% \hline
+% Logistic & 0.750 & 0.751 & 0.750\\
+% \hline
+% Naive Bayes & 0.721 & 0.725 & 0.722\\
+% \hline
+% TAN & 0.727 & 0.728 & 0.727\\
+% \hline
+% \end{tabular}
+% \end{center}
+
+\section{Discusión}
+
+% \subsection{Comparación de modelos}
+
+% \noindent Tras analizar los resultados de todas las pruebas, se observa que el algoritmo \textbf{ID3} muestra el peor rendimiento en términos de \textit{accuracy}. Este algoritmo construye un árbol de decisión para la clasificación de datos, y si un dato no puede ser clasificado, simplemente se ignora, lo que resulta en una reducción significativa del porcentaje de aciertos. En contraste, el algoritmo \textbf{J48}, una evolución del \textbf{ID3}, tiene la capacidad de manejar datos no clasificados, lo que resulta en un rendimiento superior.\\
+
+% \noindent Sin embargo, no es evidente cuál es el mejor modelo en todos los casos. Aunque el algoritmo \textbf{IB30} muestra resultados ligeramente superiores a la mayoría de los demás algoritmos, los modelos \textbf{IB1} e \textbf{IB50} parecen tener un rendimiento inferior a su versión con \verb|K = 30|. Esto sugiere que la cantidad óptima de vecinos para este problema podría estar entre \verb|K = 1| y \verb|K = 50|. El algoritmo \textbf{Logistic} también parece tener los mejores resultados en términos de \textit{accuracy} junto a \textbf{IB30}.\\
+
+% \noindent De las técnicas que hacen uso de metaclasificadores, la que mayor porcentaje de aciertos obtiene es \textbf{Random Forest}, la cual genera una serie de árboles de decisión aleatorios con un subconjunto de las variables. Cabe destacar que esta técnica proporciona el mayor porcentaje de aciertos de todos las pruebas. Una de las posibles razones por las que esta técnica tiene el mejor desempeño es que el propio algoritmo determina las variables que proporcionan mayor información a la hora de clasificar, esto resulta en que el propio algoritmo selecciona las mejores variables para el mismo, haciendo que estén ajustadas a las particularidades de este algoritmo.\\
+
+% \noindent En cuanto a las métricas de \textit{accuracy}, \textit{precision} y \textit{recall}, se observa un patrón consistente en todas las pruebas. Estas métricas tienden a tener valores muy similares, rondando alrededor de \verb|0.7|. Esta uniformidad podría indicar que el problema presenta un desafío con dificultad similar para todos los modelos evaluados, y que, exceptuando el \textbf{ID3}, no hay diferencias significativas entre los modelos de clasificación.\\
+
+\section{Conclusiones}
+
+% \noindent Después de este estudio sobre el problema de clasificación propuesto en el \textit{CS:GO AI Challenge}, se pueden obtener varias conclusiones.
+
+% \begin{itemize}
+%     \item El problema de predecir el resultado de una ronda en el videojuego \textit{CS:GO}, dado un conjunto de datos, se puede reducir al problema común de clasificación binaria.
+%     \item La mayoría de los algoritmos que se han probado en el experimento generan un resultado similar, lo que indica que el problema se puede resolver mediante varias técnicas de aprendizaje automático clásico. Sin embargo, ninguno de los algoritmos ha conseguido un \textit{accuracy} de más de \verb|0.8|, lo que indica que existe un margen de mejora considerable que podría enfocarse en mejorar los métodos de selección de variables ya que no se ha observado un gran efecto en el resultado tras aplicar dos filtrados y un método envolvente.
+%     \item La variable que parece tener más peso a la hora de intentar predecir el desenlace de una ronda es \verb|ct_armor| ya que ha sido la más seleccionada por los tres métodos de selección de variables.
+% \end{itemize}
+
+% \noindent Ha sido un experimento muy educativo e interesante ya que he podido aplicar todo el conocimiento que se ha impartido en la asignatura y en consecuencia, he afianzado mucho más los conceptos básicos del aprendizaje automático supervisado clásico.
+
+\end{document}
