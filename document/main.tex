@@ -1,11 +1,17 @@
 \documentclass{article}
 
 \usepackage{array}
+\usepackage{float}
+\usepackage{paracol}
 \usepackage{graphicx}
 \usepackage{hyperref}
 \usepackage{xcolor}
 \usepackage[spanish]{babel}
 \usepackage[a4paper, total={7in, 10in}]{geometry}
+
+\usepackage[backend=biber,style=ieee]{biblatex}
+\addbibresource{biblio.bib}
+
 
 \title{Clasificación No Supervisada}
 \author{Marco Ciccalè Baztán}
@@ -13,259 +19,225 @@
 
 \begin{document}
 
-% Custom titlepage instead of the default \maketitle for report class.
-\begin{titlepage}
-    \centering
-
-    \vspace*{1cm}
-
-    % Title and subtitle are enclosed between two rules.
-    \rule{\textwidth}{1pt}
-
-    % Title
-    \vspace{.7\baselineskip}
-    {\huge \textbf{Clasificación No Supervisada}}
-
-    % Subtitle
-    \vspace*{.5cm}
-    {\LARGE Trabajo 2 de Minería de Datos}
-    
-    \rule{\textwidth}{1pt}
-
-    \vspace{1cm}
-
-    % Set this size for the remaining titlepage.
-    \large
-
-    \centering
-        Marco Ciccalè Baztán \\
-        \textsc{C200028} \\
-        {\normalsize \url{m.ciccale@alumnos.upm.es}}
-
-
-    \vspace{3cm}
-
-    \vfill
-
-    % University and date information at the bottom of the titlepage.
-    Universidad Politécnica de Madrid \\
-    Año Académico 2023-2024 \\
-    10 de Mayo de 2024
-\end{titlepage}
-
-\newpage
-
-\tableofcontents
-
-\newpage
+\begin{center}
+\rule{\textwidth}{1pt}
+{\huge \begin{center}\textbf{Clasificación No Supervisada}\end{center}}
+\vspace*{.5cm}
+{\LARGE Marco Ciccalè Baztán}
+\rule{\textwidth}{1pt}
+\end{center}
 
 \section{Introducción}
 
-% \noindent En este documento se detallará con exhaustividad todo el proceso que se ha seguido para abordar un problema de clasificación supervisada. \\
-
-% \noindent Para resolver este problema, se ha decidido experimentar con múltiples algoritmos de aprendizaje supervisado de diferentes tipos: probabilísticos, reglas, árboles de decisión, logísticos y KNN. Además, también se exploran métodos de filtrado y envolventes para selección de variables. Así como técnicas que utilizan metaclasificadores como AdaBoost, Bagging, RandomForest y Stacking. \\
-
-% \noindent El objetivo de este experimento es evaluar e interpretar cómo se comportan los diferentes algoritmos ante este problema.
+\noindent En este documento de detallará con exhaustividad todo el proceso que se ha seguido para abordar un problema de clasificación no supervisada.
+Para resolver este problema, se ha decidido experimentar con 3 algoritmos de aprendizaje no supervisado pertenecientes a diferentes familias de \textit{clustering}:
+\textit{KMeans} (\textit{clustering} particional),
+\textit{Agglomerative} (\textit{clustering} jerárquico) y
+\textit{Gaussian Mixture Models} (\textit{clustering} probabilístico).
+El objetivo de este experimento es evaluar e interpretar cómo se comportan los diferentes algoritmos ante este problema.
 
 \section{Descripción del problema}
 
-% \noindent El problema que se aborda en este experimento fue propuesto por \textbf{Skybox} como parte del \textit{CS:GO AI Challenge} que tuvo lugar en la primavera del año 2020. Este problema de clasificación se deriva de un videojuego competitivo en el cual dos equipos de 5 miembros compiten por ganar una partida en un mapa específico. El equipo ganador es el equipo que consigue ganar un total de 16 rondas durante el partido. Concretamente, el problema de clasificación trata de predecir que equipo ganará una determinada ronda dado un \textit{snapshot} de la ronda. En este \textit{snapshot} se captura determinada información en un instante de tiempo de una ronda. Dada esta información, sería deseable poder predecir el ganador de la ronda antes de que termine.
+\noindent El problema que se aborda en este experimento nace de una base de datos con información de un conjunto de 167 países alrededor del mundo en diferentes continentes.
+Dado este conjunto de datos, se busca agrupar los países en diferentes grupos para poder evaluar cuáles de ellos pueden necesitar ayuda humanitaria con más urgencia.
 
 \section{Metodología}
 
-\subsection{Dataset}
+\subsection{Conjunto de Datos}
 
-% \noindent El dataset fue extraído de la plataforma \textit{Kaggle}. Consiste en un archivo \textit{csv} con 97 variables y 122,441 instancias. Cada instancia del dataset corresponde con un \textit{snapshot} de una determinada ronda. A continuación se muestra una descripción de cada una de las variables en el dataset.
+\noindent El conjunto de datos que se ha usado para este experimento fue extraído de la plataforma \textit{Kaggle} \cite{dataset}.
+El tamaño del dataset son 167 filas y 10 columnas,
+cada fila del conjunto de datos corresponde a un país, y cada columna un valor de las siguientes medidas:
 
-% \begin{center}
-% \begin{tabular}{ |m{7em}|m{22em}|m{7em}| }
-% \hline
-% \textbf{Variable} & \textbf{Definición} & \textbf{Valores Posibles} \\
-% \hline
-% time\_left & El tiempo restante de una ronda & Continua \\
-% \hline
-% ct\_score & El puntaje del equipo CT & Continua \\
-% \hline
-% t\_score & El puntaje del equipo T & Continua \\
-% \hline
-% map & El mapa donde se está jugando la ronda & de\_dust2, de\_inferno... \\
-% \hline
-% bomb\_planted & Si la bomba ha sido plantada o no & No (False), Yes (True) \\
-% \hline
-% ct\_health & Los puntos de vida totales de todos los miembros del equipo CT & Continua \\
-% \hline
-% t\_health & Los puntos de vida totales de todos los miembros del equipo T & Continua \\
-% \hline
-% ct\_armor & Los puntos de armadura totales de todos los miembros del equipo CT & Continua \\
-% \hline
-% t\_armor & Los puntos de armadura totales de todos los miembros del equipo CT & Continua \\
-% \hline
-% ct\_money & El dinero total de todos los miembros del equipo CT & Continua \\
-% \hline
-% t\_money & El dinero total de todos los miembros del equipo CT & Continua \\
-% \hline
-% ct\_helmets & La cantidad de cascos total de todos los miembros del equipo CT & [0..5] \\
-% \hline
-% t\_helmets & La cantidad de cascos total de todos los miembros del equipo T & [0..5] \\
-% \hline
-% ct\_defuse\_kits & La cantidad de kits de desactivación total de todos los miembros del equipo CT & [0..5] \\
-% \hline
-% ct\_players\_alive & La cantidad de miembros con vida del equipo CT & [0..5] \\
-% \hline
-% t\_players\_alive & La cantidad de miembros con vida del equipo CT & [0..5] \\
-% \hline
-% ct\_weapon\_X & La cantidad de unidades del arma X del equipo CT & [0..5] \\
-% \hline
-% t\_weapon\_X & La cantidad de unidades del arma X del equipo T & [0..5] \\
-% \hline
-% ct\_grenade\_X & La cantidad de unidades de la granada X del equipo CT & [0..5] \\
-% \hline
-% t\_grenade\_X & La cantidad de unidades de la granada X del equipo T & [0..5] \\
-% \hline
-% round\_winner & El ganador de la ronda & CT, T \\
-% \hline
-% \end{tabular}
-% \end{center}
-
+\begin{itemize}
+  \item \verb|country|: El nombre del país (nominal).
+  \item \verb|child_mort|: Cantidad de muertes de niños menores de 5 años por cada 1000 nacimientos (continua).
+  \item \verb|exports|: Exportación de bienes per cápita (continua).
+  \item \verb|health|: Cantidad de recursos invertidos en salud per cápita (continua).
+  \item \verb|imports|: Importación de bienes per cápita (continua).
+  \item \verb|income|: Ingresos per cápita (continua).
+  \item \verb|inflation|: La inflación anual (continua).
+  \item \verb|life_expec|: La media de años de vida estimados (continua).
+  \item \verb|total_fer|: La media de niños que nacen por cada mujer (continua).
+  \item \verb|gdpp|: PIB per cápita (continua).
+\end{itemize}
 
 \subsection{Preprocesado de los datos}
 
-% \noindent Dado el volumen masivo de datos en este conjunto de datos, se extrajo un subdataset de 3000 instancias utilizando la estrategia de \textit{stratify}, conservando la homogeneidad del dataset original utilizando \textit{Python}.
+\noindent Dada la naturaleza de los algoritmos de \textit{clustering}, las variables no númericas en la mayoría de los casos no suponen una información relevante para el algoritmo.
+En este caso, el nombre del país es absolutamente irrelevante para los algoritmos.
+Por ello, se eliminó del conjunto de datos para los experimentos, aunque posteriormente fue útil para determinar los países que pertenecen a cada grupo.\\
 
-% \noindent Una vez reducido el tamaño del dataset, se descretizaron las variables continuas usando el siguiente módulo de \textbf{\textit{Weka}}. \\
-
-% \noindent \verb|Discretize -B 10 -M -1.0 -R first-last -precision 6| \\
-
-% \noindent Y para reemplazar los datos vacíos, se utilizó este módulo de \textbf{\textit{Weka}}. \\
-
-% \noindent \verb|ReplaceMissingValues| \\
-
-\subsection{Algoritmos de aprendizaje}
-
-% \noindent Los algoritmos de aprendizaje que se emplearon en el experimento provienen de la herramienta \textbf{\textit{Weka}}. Estos son los modelos empleados: \textit{IB1}, \textit{IBk}, \textit{Naive Bayes}, \textit{TAN}, \textit{JRip}, \textit{ID3}, \textit{J48} y \textit{Logistic}. \\
-
-% \noindent IB1 e IBk pertenecen a la familia de los algoritmos KNN (K-Nearest Neighbours). Estos algoritmos estiman la pertenencia de un dato a una determinada clase dependiendo de qué clase está más representada en un conjunto de tamaño \verb|K| de los vecinos más cercanos a este dato. La distancia entre dos puntos en este espacio se denomina \textit{distancia euclídea}. \\
-
-% \noindent Naive Bayes y TAN (Tree Augmented Naive Bayes) pertenecen a la familia de algoritmos probabilísticos. Estos algoritmos se basan en el teorema de Bayes para estimar la pertenencia de un dato a una determinada clase. Naive Bayes es la implementación más simple de esta familia, ya que asume que las variables son independientes. Por otro lado, el TAN, no asume que las variables son independientes y por tanto genera un árbol más complejo sobre la relación de las variables. \\
-
-% \noindent JRip pertenece a la familia de los algoritmos de inducción de reglas. Estos algoritmos generan reglas iterativamente basándose en la información proporcionada por el conjunto de datos. Estas reglas se emplean para clasificar nuevos datos. \\
-
-% \noindent ID3 y J48 pertenecen a la familia de algoritmos basados en árboles de decisión. Estos algoritmos se basan construir un árbol de decisión que representa las relaciones entre las variables y las clases objetivo. ID3 emplea el \textit{information gain} para construir el árbol. Por otro lado, el J48 es una mejora natural del ID3 que utiliza el \textit{information gain ratio} para construir el árbol. Este árbol se empleará para clasificar nuevos datos. \\
-
-% \noindent Logistic pertenece a la familia de algoritmos de regresión. Estos algoritmos tratan de estimar los parámetros necesarios mediante maximizar la función de verosimilitud. \\
+\noindent Por otro lado, en el conjunto de datos, cada variable tiene un rango de valores completamente distinto.
+Esta característica afecta directamente a los resultados de los experimentos, ya que una variable con una magnitud en milares sería mucho más discriminante que una variable con una magnitud de unidades.
+Para solventar este problema, se utilizó la técnica \verb|MaxAbsScaler| de \textbf{scikit-learn} \cite{sklearn_api},
+transformando los valores de cada variable a una misma escala (entre 0 y 1).
+Pudiendo así mantener la distribución original de cada variable a la vez que igualar el peso de cada variable en los experimentos.
 
 \subsection{Pruebas realizadas}
 
+\subsubsection{Determinar el número de clusters óptimo de cada modelo}
+\label{sec:pasos-individuales}
+
+\noindent Para evaluar el comportamiento de \textit{KMeans} para este problema, se siguieron los siguientes pasos:
+
+\begin{enumerate}
+  \item Entrenar distintos modelos de \textit{KMeans} con [2, 5] \textit{clusters} utilizando la distancia euclídea.
+  \item Calcular las medias de los coeficientes de \textit{silhouette} para cada uno de los 4 modelos.
+  \item Seleccionar el modelo con mayor media de coeficiente de \textit{silhouette}.
+  \item Graficar los coeficientes de \textit{silhouette} de cada cluster.
+\end{enumerate}
+
+\noindent Para evaluar el comportamiento de \textit{Agglomerative Clustering} para este problema, se siguieron los siguientes pasos:
+
+\begin{enumerate}
+  \item Graficar el dendograma del conjunto de datos utilizando la distancia euclídea y el método \textit{ward}.
+  \item Elegir el número de \textit{clusters} óptimo dado el dendograma.
+  \item Seleccionar el modelo con mayor media de coeficiente de \textit{silhouette}.
+\end{enumerate}
+
+\noindent Para evaluar el comportamiento de \textit{Gaussian Mixtures} para este problema, se siguieron los siguientes pasos:
+
+\begin{enumerate}
+  \item Entrenar distintos modelos de \textit{Gaussian Mixture} con [2, 8] \textit{clusters} y obtener el \textit{BIC} de cada modelo.
+  \item Graficar el \textit{BIC} de cada modelo y seleccionar el número de \textit{clusters} que minimiza el \textit{BIC}
+  \item Seleccionar el modelo con mayor media de coeficiente de \textit{silhouette}.
+\end{enumerate}
+
+\subsubsection{Mostrar los resultados de los modelos óptimos}
+
+\noindent Los pasos comunes después de haber obtenido el número de \textit{clusters} óptimo para cada algoritmo son los siguientes:
+
+\begin{enumerate}
+  \item Graficar la distribución de las 9 variables del conjunto de datos para cada \textit{cluster}.
+  \item Graficar un mapa del mundo donde se muestra qué países pertenecen a cada \textit{cluster}.
+\end{enumerate}
+
 \section{Resultados}
 
-\noindent En esta sección se presentan los resultados de la evaluación de todos los modelos.
+\subsection{KMeans (Clustering Particional)}
+\label{sec:kmeans}
 
-\subsection{Clustering Particional}
+\noindent Después de seguir los pasos detallados en la sección \ref{sec:pasos-individuales}, el número de \textit{clusters} óptimo (modelo que no tiene valores negativos en sus coeficientes de \textit{silhouette} y que maximiza su media) es 2.
+La media de los coeficientes de \textit{silhouette} del modelo con 2 \textit{clusters} es \verb|0.329|.
+La figura \ref{fig:silhouette} refleja los coeficientes de \textit{silhouette} de cada \textit{cluster} y la media de los coeficientes.
 
-% \begin{center}
-% \begin{tabular}{ |m{11em}|m{7em}|m{7em}|m{7em}| }
-% \hline
-% \textbf{Algoritmo} & \textbf{\textit{Accuracy}} & \textbf{\textit{Precision}} & \textbf{\textit{Recall}}\\
-% \hline
-% IB1 & 0.734 & 0.734 & 0.734\\
-% \hline
-% IB30 & 0.747 & 0.749 & 0.748\\
-% \hline
-% IB50 & 0.740 & 0.741 & 0.740\\
-% \hline
-% ID3 & 0.622 & 0.706 & 0.706\\
-% \hline
-% J48 & 0.719 & 0.720 & 0.720\\
-% \hline
-% JRip & 0.717 & 0.720 & 0.718\\
-% \hline
-% Logistic & 0.741 & 0.741 & 0.741\\
-% \hline
-% Naive Bayes & 0.716 & 0.717 & 0.716\\
-% \hline
-% TAN & 0.739 & 0.740 & 0.740\\
-% \hline
-% \end{tabular}
-% \end{center}
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=0.5\linewidth]{../images/kmeans/silhouette.png}
+  \caption{Coeficientes de \textit{silhouette} para el número de \textit{clusters} óptimo}
+  \label{fig:silhouette}
+\end{figure}
 
-\subsection{Clustering Jerárquico}
+\columnratio{0.2}
+\begin{paracol}{2}
+  \sloppy
+  \switchcolumn[0]*
+  \noindent Por otro lado, en la figura \ref{fig:kmeans-features} se pueden observar las diferencias entre los \textit{clusters} para cada variable.
+  Lo más destacable es la diferencia entre las muertes infantiles, la cantidad de ingresos, la fertilidad y el PIB per cápita.
+  Observando con detalle estas variables, se puede deducir que el \textit{cluster} 0 seguramente englobe países en vías de desarrollo o subdesarrollados, ya que el PIB per cápita se concentra en un rango de valores muy pequeño y cerca de 0, al igual que los ingresos.
+  Además, el número de muertes infantiles y la fertilidad parecen mucho mayores en el \textit{cluster} 0, características que suelen ser atribuídas a países pertenecientes a estos grupos.\\
 
-% \begin{center}
-% \begin{tabular}{ |m{11em}|m{7em}|m{7em}|m{7em}| }
-% \hline
-% \textbf{Algoritmo} & \textbf{\textit{Accuracy}} & \textbf{\textit{Precision}} & \textbf{\textit{Recall}}\\
-% \hline
-% IB1 & 0.688 & 0.689 & 0.688\\
-% \hline
-% IB30 & 0.727 & 0.732 & 0.727\\
-% \hline
-% IB50 & 0.724 & 0.728 & 0.724\\
-% \hline
-% ID3 & 0.621 & 0.696 & 0.695\\
-% \hline
-% J48 & 0.731 & 0.731 & 0.731\\
-% \hline
-% JRip & 0.724 & 0.734 & 0.724\\
-% \hline
-% Logistic & 0.741 & 0.742 & 0.741\\
-% \hline
-% Naive Bayes & 0.698 & 0.700 & 0.698\\
-% \hline
-% TAN & 0.730 & 0.730 & 0.730\\
-% \hline
-% \end{tabular}
-% \end{center}
+  \noindent La figura \ref{fig:kmeans-map} representa un mapa del mundo donde se muestra qué países pertenecen a cada cluster.
 
-\subsection{Clustering Probabilístico}
+  \switchcolumn
+  \begin{figure}[H]
+    \includegraphics[width=\linewidth]{../images/kmeans/features-dist.png}
+    \caption{Distribución de las variables para cada \textit{cluster} en \textit{kmeans}}
+    \label{fig:kmeans-features}
+  \end{figure}
+\end{paracol}
 
-% \begin{center}
-% \begin{tabular}{ |m{11em}|m{7em}|m{7em}|m{7em}| }
-% \hline
-% \textbf{Algoritmo} & \textbf{\textit{Accuracy}} & \textbf{\textit{Precision}} & \textbf{\textit{Recall}}\\
-% \hline
-% IB1 & 0.714 & 0.715 & 0.714\\
-% \hline
-% IB30 & 0.748 & 0.751 & 0.748\\
-% \hline
-% IB50 & 0.746 & 0.748 & 0.746\\
-% \hline
-% ID3 & 0.627 & 0.706 & 0.705\\
-% \hline
-% J48 & 0.731 & 0.731 & 0.731\\
-% \hline
-% JRip & 0.729 & 0.735 & 0.729\\
-% \hline
-% Logistic & 0.750 & 0.751 & 0.750\\
-% \hline
-% Naive Bayes & 0.721 & 0.725 & 0.722\\
-% \hline
-% TAN & 0.727 & 0.728 & 0.727\\
-% \hline
-% \end{tabular}
-% \end{center}
+\vspace{-10pt}
 
-\section{Discusión}
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=\linewidth]{../images/kmeans/map.png}
+  \caption{Distribución de las variables para cada \textit{cluster}}
+  \label{fig:kmeans-map}
+\end{figure}
 
-% \subsection{Comparación de modelos}
+\subsection{Agglomerative Clustering (Clustering Jerárquico)}
+\noindent Después de seguir los pasos detallados en la sección \ref{sec:pasos-individuales}, se puede identificar en el dendograma de la figura \ref{fig:dendogram} que el número de \textit{clusters} óptimo es 2,
+ya que es donde se puede aprecuar una distancia en el eje \textit{y} más notoria entre las dos primeras ramas.
 
-% \noindent Tras analizar los resultados de todas las pruebas, se observa que el algoritmo \textbf{ID3} muestra el peor rendimiento en términos de \textit{accuracy}. Este algoritmo construye un árbol de decisión para la clasificación de datos, y si un dato no puede ser clasificado, simplemente se ignora, lo que resulta en una reducción significativa del porcentaje de aciertos. En contraste, el algoritmo \textbf{J48}, una evolución del \textbf{ID3}, tiene la capacidad de manejar datos no clasificados, lo que resulta en un rendimiento superior.\\
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=0.4\linewidth]{../images/agglomerative/dendogram.png}
+  \caption{Dendograma del conjunto de datos}
+  \label{fig:dendogram}
+\end{figure}
 
-% \noindent Sin embargo, no es evidente cuál es el mejor modelo en todos los casos. Aunque el algoritmo \textbf{IB30} muestra resultados ligeramente superiores a la mayoría de los demás algoritmos, los modelos \textbf{IB1} e \textbf{IB50} parecen tener un rendimiento inferior a su versión con \verb|K = 30|. Esto sugiere que la cantidad óptima de vecinos para este problema podría estar entre \verb|K = 1| y \verb|K = 50|. El algoritmo \textbf{Logistic} también parece tener los mejores resultados en términos de \textit{accuracy} junto a \textbf{IB30}.\\
+\noindent Por otro lado, en la figura \ref{fig:agglomerative-features} se puede observar que la diferencias entre los \textit{clusters} para cada variable son prácticamente idénticas al caso anterior de \textit{KMeans} en la sección \ref{sec:kmeans}, seguramente debido a que se está utilizando la distancia euclídea en ambos algoritmos como medida de distancia entre instancias, por lo que las conclusiones obtenidas con \textit{KMeans} son perfectamente válidas para este caso también.\\
 
-% \noindent De las técnicas que hacen uso de metaclasificadores, la que mayor porcentaje de aciertos obtiene es \textbf{Random Forest}, la cual genera una serie de árboles de decisión aleatorios con un subconjunto de las variables. Cabe destacar que esta técnica proporciona el mayor porcentaje de aciertos de todos las pruebas. Una de las posibles razones por las que esta técnica tiene el mejor desempeño es que el propio algoritmo determina las variables que proporcionan mayor información a la hora de clasificar, esto resulta en que el propio algoritmo selecciona las mejores variables para el mismo, haciendo que estén ajustadas a las particularidades de este algoritmo.\\
+\noindent Esta similitud entre los algoritmos también se puede observar en la figura \ref{fig:agglomerative-map}, ya que también son prácticamente idénticos.
 
-% \noindent En cuanto a las métricas de \textit{accuracy}, \textit{precision} y \textit{recall}, se observa un patrón consistente en todas las pruebas. Estas métricas tienden a tener valores muy similares, rondando alrededor de \verb|0.7|. Esta uniformidad podría indicar que el problema presenta un desafío con dificultad similar para todos los modelos evaluados, y que, exceptuando el \textbf{ID3}, no hay diferencias significativas entre los modelos de clasificación.\\
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=\linewidth]{../images/agglomerative/map.png}
+  \caption{Países pertenecientes a cada \textit{cluster}}
+  \label{fig:agglomerative-map}
+\end{figure}
+
+\subsection{Gaussian Mixture (Clustering Probabilístico)}
+\noindent Después de seguir los pasos detallados en la sección \ref{sec:pasos-individuales}, se puede identificar en la figura \ref{fig:bic} que el número de \textit{clusters} que minimiza el \textit{BIC} es 3,
+siendo así el número óptimo de \textit{clusters}.
+
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=0.35\linewidth]{../images/gaussian/bic.png}
+  \caption{Gráfica que representa los valores \textit{BIC} asociados a cada modelo con diferente número de \textit{clusters}}
+  \label{fig:bic}
+\end{figure}
+
+\columnratio{0.2}
+\begin{paracol}{2}
+  \sloppy
+  \switchcolumn[0]*
+  \noindent Por otro lado, en la figura \ref{fig:gaussian-features} se pueden observar las diferencias entre los \textit{clusters} para cada variable.
+  Lo más destacable de esta figura es que se pueden observar dos \textit{clusters} (0 y 1) que comparten muchos rasgos sociales como la fertilidad más baja, la esperanza de vida más alta y la baja mortalidad infantil.
+  Sin embargo, en rasgos más economicos, pareciera que el \textit{cluster} 0 no está todavía en los niveles en los que está el \textit{cluster} 1,
+  como por ejemplo en el PIB per cápita, los ingresos y el gasto en salud.
+  De estas conclusiones, se puede deducir que el \textit{cluster} 2 representa a los países en desarrollo total,
+  el \textit{cluster} 0 representa a los países que están desarrollados al nivel del \textit{cluster} 1 en temas sociales pero que todavía están atrás en temas económicos,
+  y el \textit{cluster} 1 representa a los países desarrollados.
+
+  \noindent La figura \ref{fig:gaussian-map} representa un mapa del mundo donde se muestra qué países pertenecen a cada cluster.
+
+  \switchcolumn
+  \begin{figure}[H]
+    \includegraphics[width=\linewidth]{../images/gaussian/features-dist.png}
+    \caption{Distribución de las variables para cada \textit{cluster} en \textit{gaussian mixture}}
+    \label{fig:gaussian-features}
+  \end{figure}
+\end{paracol}
+
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=\linewidth]{../images/gaussian/map.png}
+  \caption{Países pertenecientes a cada \textit{cluster}}
+  \label{fig:gaussian-map}
+\end{figure}
 
 \section{Conclusiones}
 
-% \noindent Después de este estudio sobre el problema de clasificación propuesto en el \textit{CS:GO AI Challenge}, se pueden obtener varias conclusiones.
+\noindent Después de haber realizado este experimento, se puede concluir que los algoritmos \textit{KMeans} y \textit{Agglomerative Clustering} a pesar de haber podido distinguir dos posibles grupos, la agrupación no parece muy acertada, ya que identifica países como China y Rusia como parte del \textit{cluster} donde se encuentran países verdaderamente subdesarollados como Sudán.
+Esto también se ve reflejado formalmente en el bajo coeficiente de \textit{silhouette} que se muestra en la figura \ref{fig:silhouette} y la distancia no tan pronunciada entre las ramas del dendograma de la figura \ref{fig:dendogram}.\\
 
-% \begin{itemize}
-%     \item El problema de predecir el resultado de una ronda en el videojuego \textit{CS:GO}, dado un conjunto de datos, se puede reducir al problema común de clasificación binaria.
-%     \item La mayoría de los algoritmos que se han probado en el experimento generan un resultado similar, lo que indica que el problema se puede resolver mediante varias técnicas de aprendizaje automático clásico. Sin embargo, ninguno de los algoritmos ha conseguido un \textit{accuracy} de más de \verb|0.8|, lo que indica que existe un margen de mejora considerable que podría enfocarse en mejorar los métodos de selección de variables ya que no se ha observado un gran efecto en el resultado tras aplicar dos filtrados y un método envolvente.
-%     \item La variable que parece tener más peso a la hora de intentar predecir el desenlace de una ronda es \verb|ct_armor| ya que ha sido la más seleccionada por los tres métodos de selección de variables.
-% \end{itemize}
+\noindent Por otro lado, el algoritmo \textit{Gaussian Mixture} ha podido diferenciar con mayor precisión 3 \textit{clusters} distintos, donde ha agrupado países desarrollados (españa, alemania...), países en vías de desarrollo (rusia, china...) y países subdesarrollados (nigeria, mali). \\
 
-% \noindent Ha sido un experimento muy educativo e interesante ya que he podido aplicar todo el conocimiento que se ha impartido en la asignatura y en consecuencia, he afianzado mucho más los conceptos básicos del aprendizaje automático supervisado clásico.
+\noindent Una vez realizado este análisis sobre los resultados de los experimentos, se ha podido comprobar formalmente con diferentes técnicas qué países son los que más necesitan ayuda humanitaria, pudiendo así evaluar cómo distribuir las ayudas más eficientemente e intentando ver qué países pueden necesitarla aunque se piense que son países con un nivel de desarrollo más alto.
+
+\section*{Anexo}
+
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=0.68\linewidth]{../images/agglomerative/features-dist.png}
+  \caption{Distribución de las variables para cada \textit{cluster} en \textit{agglomerative clustering}}
+  \label{fig:agglomerative-features}
+\end{figure}
+
+\addcontentsline{toc}{chapter}{Bibliography}
+\printbibliography
 
 \end{document}
