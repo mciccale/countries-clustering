@@ -168,9 +168,8 @@ ya que es donde se puede aprecuar una distancia en el eje \textit{y} más notori
   \label{fig:dendogram}
 \end{figure}
 
-\noindent Por otro lado, en la figura \ref{fig:agglomerative-features} se puede observar que la diferencias entre los \textit{clusters} para cada variable son prácticamente idénticas al caso anterior de \textit{KMeans} en la sección \ref{sec:kmeans}, seguramente debido a que se está utilizando la distancia euclídea en ambos algoritmos como medida de distancia entre instancias, por lo que las conclusiones obtenidas con \textit{KMeans} son perfectamente válidas para este caso también.\\
-
-\noindent Esta similitud entre los algoritmos también se puede observar en la figura \ref{fig:agglomerative-map}, ya que también son prácticamente idénticos.
+\noindent Por otro lado, en la figura \ref{fig:agglomerative-features} se puede observar que la diferencias entre los \textit{clusters} para cada variable son prácticamente idénticas al caso anterior de \textit{KMeans} en la sección \ref{sec:kmeans}, seguramente debido a que se está utilizando la distancia euclídea en ambos algoritmos como medida de distancia entre instancias, por lo que las conclusiones obtenidas con \textit{KMeans} son perfectamente válidas para este caso también. 
+Esta similitud entre los algoritmos también se puede observar en la figura \ref{fig:agglomerative-map}, ya que también son prácticamente idénticos.
 
 \begin{figure}[H]
   \centering
@@ -228,16 +227,16 @@ Esto también se ve reflejado formalmente en el bajo coeficiente de \textit{silh
 
 \noindent Una vez realizado este análisis sobre los resultados de los experimentos, se ha podido comprobar formalmente con diferentes técnicas qué países son los que más necesitan ayuda humanitaria, pudiendo así evaluar cómo distribuir las ayudas más eficientemente e intentando ver qué países pueden necesitarla aunque se piense que son países con un nivel de desarrollo más alto.
 
+\addcontentsline{toc}{chapter}{Bibliography}
+\printbibliography
+
 \section*{Anexo}
 
 \begin{figure}[H]
   \centering
-  \includegraphics[width=0.68\linewidth]{../images/agglomerative/features-dist.png}
+  \includegraphics[width=\linewidth]{../images/agglomerative/features-dist.png}
   \caption{Distribución de las variables para cada \textit{cluster} en \textit{agglomerative clustering}}
   \label{fig:agglomerative-features}
 \end{figure}
-
-\addcontentsline{toc}{chapter}{Bibliography}
-\printbibliography
 
 \end{document}
